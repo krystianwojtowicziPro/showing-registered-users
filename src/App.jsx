@@ -1,11 +1,8 @@
-import "./App.css";
+import "./App.scss";
+import { List } from "./components/List";
 
 function App() {
-  return (
-    <>
-      <h1>sth</h1>
-    </>
-  );
+  return <List></List>;
 }
 
 export default App;

@@ -1,0 +1,22 @@
+.participants-wrapper {
+  display: flex;
+  justify-content: space-around;
+  .participants {
+    width: 350px;
+  }
+}
+
+.users {
+  display: flex;
+  width: 300px;
+  margin: auto;
+  height: 30px;
+  .name {
+    width: 200px;
+    line-height: 25px;
+  }
+}
+
+.input {
+  transform: scale(2);
+}
