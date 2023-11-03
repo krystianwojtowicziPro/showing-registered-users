@@ -95,7 +95,7 @@ export const List = () => {
           filteredUsers.map((user) => (
             <div key={user.identyfikator} className="users">
               <div className="name">{user.imie + " " + user.lastName}</div>
-              <input type="checkbox" className="input" />
+              <input type="checkbox" className="input" checked={isChecked} />
             </div>
           ))}
       </div>
