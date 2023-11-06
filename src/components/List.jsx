@@ -6,6 +6,25 @@ export const List = () => {
   const [isChecked, setIsChecked] = useState(false);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [numberOfUsers, setNumberOfUsers] = useState(null);
+  const [, setSelectedItem] = useState("All");
+
+  const letters = [];
+
+  const filterUsers = (item) => {
+    setSelectedItem(item);
+    if (item !== "All") {
+      const users = filteredUsers.filter(
+        (user) => user.lastName.charAt(0) === item
+      );
+      setFilteredUsers(users);
+    } else {
+      filterRegisteredUsers();
+    }
+  };
+
+  const handleChange = () => {
+    setIsChecked(!isChecked);
+  };
 
   useEffect(() => {
     getNumberOfUsers();
@@ -23,16 +42,15 @@ export const List = () => {
 
   const numberQuery = useQuery({
     queryKey: ["number"],
-    queryFn: () => {
-      return axios
-        .get(`https://dlc.org.pl/app/F6QfbuW3jG9WMfX3aQRr/users.php?registered`)
-        .then(function (res) {
-          if (Array.isArray(res.data)) {
-            return res.data.length;
-          } else {
-            return 0;
-          }
-        });
+    queryFn: async () => {
+      const res = await axios.get(
+        `https://dlc.org.pl/app/F6QfbuW3jG9WMfX3aQRr/users.php?registered`
+      );
+      if (Array.isArray(res.data)) {
+        return res.data.length;
+      } else {
+        return 0;
+      }
     },
   });
 
@@ -70,6 +88,18 @@ export const List = () => {
     filterRegisteredUsers();
   }, [isChecked, usersQuery.data]);
 
+  if (usersQuery.data && usersQuery.data.length > 0) {
+    usersQuery.data.forEach((user) => {
+      const firstLetter = user.lastName.charAt(0);
+      if (!letters.includes(firstLetter)) {
+        letters.push(firstLetter);
+      }
+      if (letters.length > 0 && !letters.includes("All")) {
+        letters.unshift("All");
+      }
+    });
+  }
+
   if (numberQuery.isLoading || usersQuery.isLoading) {
     return <div>Ładowanie...</div>;
   }
@@ -85,17 +115,32 @@ export const List = () => {
           UCZESTNICY {numberQuery.data}/{numberOfUsers}
         </h1>
         <input
+          checked={isChecked}
           type="checkbox"
           className="input"
-          onClick={() => setIsChecked(!isChecked)}
+          onChange={handleChange}
         />
       </div>
+      {letters.map((letter) => (
+        <button
+          className="button"
+          key={letter}
+          onClick={() => filterUsers(letter)}
+        >
+          {letter}
+        </button>
+      ))}
       <div>
         {filteredUsers &&
           filteredUsers.map((user) => (
             <div key={user.identyfikator} className="users">
               <div className="name">{user.imie + " " + user.lastName}</div>
-              <input type="checkbox" className="input" checked={isChecked} />
+              <input
+                type="checkbox"
+                className="input"
+                checked={isChecked}
+                readOnly
+              />
             </div>
           ))}
       </div>
