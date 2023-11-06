@@ -134,7 +134,7 @@ export const List = () => {
         {filteredUsers &&
           filteredUsers.map((user) => (
             <div key={user.identyfikator} className="users">
-              <div className="name">{user.imie + " " + user.lastName}</div>
+              <div className="name">{user.lastName + " " + user.imie}</div>
               <input
                 type="checkbox"
                 className="input"
