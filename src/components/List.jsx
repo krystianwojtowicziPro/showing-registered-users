@@ -1,149 +1,48 @@
-import axios from "axios";
-import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+// import axios from "axios";
+import { useState, useEffect } from 'react';
+// import { useQuery } from "@tanstack/react-query";
 
 export const List = () => {
-  const [isChecked, setIsChecked] = useState(false);
-  const [filteredUsers, setFilteredUsers] = useState([]);
-  const [numberOfUsers, setNumberOfUsers] = useState(null);
-  const [, setSelectedItem] = useState("All");
-
-  const letters = [];
-
-  const filterUsers = (item) => {
-    setSelectedItem(item);
-    if (item !== "All") {
-      const users = filteredUsers.filter(
-        (user) => user.lastName.charAt(0) === item
-      );
-      setFilteredUsers(users);
-    } else {
-      filterRegisteredUsers();
-    }
-  };
-
-  const handleChange = () => {
-    setIsChecked(!isChecked);
-  };
-
+  const [data, setData] = useState([]);
   useEffect(() => {
-    getNumberOfUsers();
-  }, []);
-
-  function getNumberOfUsers() {
-    axios
-      .get(`https://dlc.org.pl/app/F6QfbuW3jG9WMfX3aQRr/users.php?number=all`)
-      .then(function (res) {
-        if (Array.isArray(res.data)) {
-          setNumberOfUsers(res.data.length);
-        }
-      });
-  }
-
-  const numberQuery = useQuery({
-    queryKey: ["number"],
-    queryFn: async () => {
-      const res = await axios.get(
-        `https://dlc.org.pl/app/F6QfbuW3jG9WMfX3aQRr/users.php?registered`
-      );
-      if (Array.isArray(res.data)) {
-        return res.data.length;
-      } else {
-        return 0;
-      }
-    },
-  });
-
-  const usersQuery = useQuery({
-    queryKey: ["users"],
-    queryFn: async () => {
-      // Użyj async/await, aby obsłużyć zapytanie asynchronicznie
+    const fetchData = async () => {
       try {
-        const response = await axios.get(
-          "https://dlc.org.pl/app/F6QfbuW3jG9WMfX3aQRr/users.php?number=all"
+        const response = await fetch(
+          'https://jsonplaceholder.typicode.com/todos'
         );
-        if (Array.isArray(response.data)) {
-          const sortedUsers = response.data.sort((a, b) =>
-            a.lastName.localeCompare(b.lastName)
-          );
-          return sortedUsers;
-        }
+        const data = await response.json();
+
+        // Ogranicz do pierwszych 4 elementów
+        const firstFourItems = data.slice(0, 4);
+
+        const usersWithDetails = await Promise.all(
+          firstFourItems.map(async (todo) => {
+            const userDetailsResponse = await fetch(
+              `https://jsonplaceholder.typicode.com/posts/${todo.id}`
+            );
+            const userDetails = await userDetailsResponse.json();
+            return { ...todo, details: userDetails };
+          })
+        );
+
+        setData(usersWithDetails);
+        // setData(firstFourItems);
       } catch (error) {
-        console.error("Błąd podczas zapytania:", error);
+        console.error('Error fetching data:', error);
       }
-      // Upewnij się, że zawsze zwracasz jakąś wartość, nawet jeśli zapytanie się nie powiodło
-      return []; // Zwracamy pustą tablicę w przypadku błędu
-    },
-  });
+    };
 
-  const filterRegisteredUsers = () => {
-    const registeredOrNot = usersQuery?.data?.filter((user) => {
-      const isCheckedAsBool = user.registered[0] === "-" ? false : true;
-      return isCheckedAsBool === isChecked;
-    });
-    setFilteredUsers(registeredOrNot);
-  };
-
-  useEffect(() => {
-    filterRegisteredUsers();
-  }, [isChecked, usersQuery.data]);
-
-  if (usersQuery.data && usersQuery.data.length > 0) {
-    usersQuery.data.forEach((user) => {
-      const firstLetter = user.lastName.charAt(0);
-      if (!letters.includes(firstLetter)) {
-        letters.push(firstLetter);
-      }
-      if (letters.length > 0 && !letters.includes("All")) {
-        letters.unshift("All");
-      }
-    });
-  }
-
-  if (numberQuery.isLoading || usersQuery.isLoading) {
-    return <div>Ładowanie...</div>;
-  }
-
-  if (numberQuery.isError || usersQuery.isError) {
-    return <div>Wystąpił błąd podczas ładowania danych.</div>;
-  }
+    fetchData();
+  }, []);
 
   return (
     <main>
-      <div className="participants-wrapper">
-        <h1 className="participants">
-          UCZESTNICY {numberQuery.data}/{numberOfUsers}
-        </h1>
-        <input
-          checked={isChecked}
-          type="checkbox"
-          className="input"
-          onChange={handleChange}
-        />
-      </div>
-      {letters.map((letter) => (
-        <button
-          className="button"
-          key={letter}
-          onClick={() => filterUsers(letter)}
-        >
-          {letter}
-        </button>
+      {data.map((item) => (
+        <div key={item.id}>
+          {item.id}
+          {item.details.title}
+        </div>
       ))}
-      <div>
-        {filteredUsers &&
-          filteredUsers.map((user) => (
-            <div key={user.identyfikator} className="users">
-              <div className="name">{user.lastName + " " + user.imie}</div>
-              <input
-                type="checkbox"
-                className="input"
-                checked={isChecked}
-                readOnly
-              />
-            </div>
-          ))}
-      </div>
     </main>
   );
 };
